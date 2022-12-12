@@ -1,0 +1,32 @@
+---
+ - name: Running Playbook
+   hosts: all
+   become: yes
+   #gather_facts: false
+   tasks:
+           - name: Installing packages on Ubuntu
+             apt:
+              name: "{{ item }}"
+              state: present
+             loop:
+                     - wget
+                     - vim
+                     - apache2
+                     - tcpdump
+                     - nano
+                     - iptables
+             when: ansible_distribution == "Ubuntu"
+
+           - name: Installing packages
+             yum:
+              name: "{{ item }}"
+              state: present
+             loop:
+                     - wget
+                     - vim
+                     - httpd
+                     - tcpdump
+                     - nano
+                     - iptables
+             when: ansible_distribution == "Amazon"
+
