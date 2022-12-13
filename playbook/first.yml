@@ -1,0 +1,63 @@
+---
+ - name: Playbook for checking the Amazon server uptime
+   hosts: amazon*
+   vars:
+           pkg: uptime
+   tasks:
+           - shell: rpm -q procps-ng-3.3.10-26.amzn2.x86_64 | head -n 1
+             args:
+                     warn: false
+             register: result
+             when: ansible_distribution == "Amazon"
+
+           - set_fact:
+                   result: "{{ result.stdout }}"
+
+           - debug:
+                   msg: "Is the {{ pkg }} installed: {{ result }}"
+
+           - yum:
+                   name: procps
+                   state: latest
+             when: result | regex_search("not installed")
+
+           - shell: uptime
+             register: result1
+
+           - set_fact:
+                   result1: "{{ result1.stdout }}"
+
+           - debug:
+                   msg: "{{ result1 }}"
+
+
+ - name: Playbook for checking the Ubuntu server uptime
+   hosts: ubuntu*
+   vars:
+           pkg: uptime
+   tasks:
+           - shell: apt list | grep uptime | tail -n 1
+             args:
+                     warn: false
+             register: result
+             when: ansible_distribution == "Ubuntu"
+
+           - set_fact:
+                   result: "{{ result.stdout }}"
+
+           - debug:
+                   msg: "Is the {{ pkg }} installed: {{ result }}"
+
+           - apt:
+                   name: "{{ pkg }}"
+                   state: latest
+             when: result | regex_search("not installed")
+
+           - shell: uptime
+             register: result1
+
+           - set_fact:
+                   result1: "{{ result1.stdout }}"
+
+           - debug:
+                   msg: "{{ result1 }}"
