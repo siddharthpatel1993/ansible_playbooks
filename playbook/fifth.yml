@@ -16,6 +16,7 @@
                      - nano
                      - iptables
                      - procps
+                     - git
              when: ansible_distribution == "Ubuntu"
 
            - name: Installing packages
@@ -30,5 +31,6 @@
                      - nano
                      - iptables
                      - procps
+                     - git
              when: ansible_distribution == "Amazon"
 
