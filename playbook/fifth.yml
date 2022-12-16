@@ -17,6 +17,10 @@
                      - iptables
                      - procps
                      - git
+                     - curl
+                     - net-tools
+                     - ping
+
              when: ansible_distribution == "Ubuntu"
 
            - name: Installing packages
@@ -32,5 +36,9 @@
                      - iptables
                      - procps
                      - git
+                     - curl
+                     - net-tools
+                     - ping
+
              when: ansible_distribution == "Amazon"
 

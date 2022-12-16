@@ -3,5 +3,5 @@
 3. Gather server stats and sars
 4. Collect server logs
 5. Install or remove packages and software
-6. Install web server and configure eveything
+6. Install web server and configure everything
 7. Create 10 user at a time.

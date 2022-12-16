@@ -1,0 +1,22 @@
+---
+ - name: This playbook for doing all web server releated task
+   hosts: ubuntuhost
+   become: yes
+   vars:
+           server_name: Prod Server
+           owner: Nidhi my love
+   tasks:
+           - name: Installing apache2
+             apt: name=apache2 state=present
+
+           - name: Starting apache2
+             service: name=apache2 state=started
+
+           - name: copy index file
+             template: src=index.j2 dest=/var/www/html/index.html
+
+             #- name: Stopping the apach2
+             #service: name=apache2 state=stopped
+
+             #- name: Uninstalling apache2 
+             # apt: name=apache2 state=absent
