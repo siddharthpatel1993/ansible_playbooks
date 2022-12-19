@@ -1,3 +1,5 @@
+#ansible-playbook seventh.yml --tag create
+#ansible-playbook seventh.yml --tag remove
 ---
  - name: Running Playbook
    hosts: all
@@ -7,8 +9,7 @@
            - name: Creating 10 users now
              user:
               name: "{{ item }}"
-              #state: absent
-              #remove: yes
+              state: present
               comment: "Adding {{ item }} now"
               group: normaluser
              loop:
@@ -22,3 +23,22 @@
                      - user8
                      - user9
                      - user10
+             tags: create 
+
+           - name: Removing all 10 users now
+             user:
+              name: "{{ item }}"
+              state: absent
+              remove: yes
+             loop:
+                     - user1
+                     - user2
+                     - user3
+                     - user4
+                     - user5
+                     - user6
+                     - user7
+                     - user8
+                     - user9
+                     - user10
+             tags: remove

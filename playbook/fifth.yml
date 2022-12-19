@@ -1,3 +1,5 @@
+#ansible-playbook fifth.yml --tag install
+#ansible-playbook fifth.yml --tag remove
 ---
  - name: Running Playbook
    hosts: all
@@ -19,9 +21,10 @@
                      - git
                      - curl
                      - net-tools
-                     - ping
+                     - iputils-ping
 
              when: ansible_distribution == "Ubuntu"
+             tags: install
 
            - name: Installing packages
              yum:
@@ -38,7 +41,48 @@
                      - git
                      - curl
                      - net-tools
-                     - ping
+                     - iputils
 
              when: ansible_distribution == "Amazon"
+             tags: install
+
+           - name: Removing packages on Ubuntu
+             apt:
+              name: "{{ item }}"
+              state: absent
+             loop:
+                     - wget
+                     - vim
+                     - apache2
+                     - tcpdump
+                     - nano
+                     - iptables
+                     - procps
+                     - git
+                     - curl
+                     - net-tools
+                     - iputils-ping
+
+             when: ansible_distribution == "Ubuntu"
+             tags: remove
+
+           - name: Removing packages
+             yum:
+              name: "{{ item }}"
+              state: absent
+             loop:
+                     - wget
+                     - vim
+                     - httpd
+                     - tcpdump
+                     - nano
+                     - iptables
+                     - procps
+                     - git
+                     - net-tools
+                     - iputils
+
+             when: ansible_distribution == "Amazon"
+             tags: remove
+
 
