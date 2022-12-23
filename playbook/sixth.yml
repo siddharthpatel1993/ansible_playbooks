@@ -1,7 +1,7 @@
 #ansible-playbook sixth.yml --tag install
 #ansible-playbook sixth.yml --tag simple_configure
 #ansible-playbook sixth.yml --tag remove
-#ansible-playbook sixth.yml --tag virtualserver_configure
+#ansible-playbook sixth.yml --tag virtualhost_configure
 #ansible-playbook sixth.yml --tag ssl_configure
 #ansible-playbook sixth.yml --tag display_server_status
 ---
@@ -39,17 +39,17 @@
                      path: /var/www/website1
                      state: directory
                      mode: '0755'
-             tags: virtualserver_configure
+             tags: virtualhost_configure
 
            - copy:
                    dest: /var/www/website1/index.html
                    content: "This is website1\n"
-             tags: virtualserver_configure
+             tags: virtualhost_configure
 
            - copy:
                    src: ../files/website1.conf
                    dest: /etc/apache2/sites-available/website1.conf
-             tags: virtualserver_configure
+             tags: virtualhost_configure
 
            - shell: >
                    a2ensite website1.conf | grep -q 'already enabled'
@@ -58,7 +58,7 @@
              register: result
              changed_when: result.stdout != 'already enabled'
              notify: reload_apache2
-             tags: virtualserver_configure
+             tags: virtualhost_configure
 
            - shell: >
                    a2enmod ssl | grep -q 'Module ssl already enabled'
