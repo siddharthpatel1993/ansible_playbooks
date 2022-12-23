@@ -82,15 +82,7 @@
                    src: ../files/000-default.conf
                    dest: /etc/apache2/sites-available/000-default.conf
              tags: display_server_status
-
-           - shell: >
-                   a2enmod status | grep -q 'already enabled'
-                   && echo -n 'already enabled'
-                   || a2enmod status
-             register: result3
-             changed_when: result3.stdout != 'already enabled'
              notify: restart_apache2
-             tags: display_server_status
 
    handlers:
            - name: restart_apache2
