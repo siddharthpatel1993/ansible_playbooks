@@ -1,0 +1,35 @@
+#The /etc/hosts file is crucial for Docker's linking system. Therefore, in the Docker world, /etc/hosts should only be manipulated manually at the image level, rather than the container level.
+
+#Add the content in /etc/hosts file manually
+---
+ - name: Playbook for create one virtual host
+   hosts: ubuntuhost
+   become: yes
+   tasks:
+           - name: Creating website1 dir for index file
+             file:
+                     path: /var/www/website1
+                     state: directory
+                     mode: '0755'
+
+           - copy:
+                   dest: /var/www/website1/index.html
+                   content: "This is website1\n"
+
+           - copy:
+                   src: ../files//website1.conf
+                   dest: /etc/apache2/sites-available/website1.conf
+
+           - shell: >
+                   a2ensite website1.conf | grep -q 'already enabled'
+                   && echo -n 'already enabled'
+                   || a2ensite website1.conf
+             register: result
+             changed_when: result.stdout != 'already enabled'
+             notify: reload_httpd
+
+   handlers:
+           - name: reload_httpd 
+             service:
+                   name: apache2
+                   state: reloaded
