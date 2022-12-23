@@ -1,0 +1,32 @@
+---
+ - hosts: ubuntuhost
+   become: yes
+   tasks:
+           - shell: >
+                   a2enmod ssl | grep -q 'Module ssl already enabled'
+                   && echo -n 'Module ssl already enabled'
+                   || a2enmod ssl
+             register: result
+             changed_when: result.stdout != 'Module ssl already enabled'
+             notify: restart_apache2
+             #tags: virtualserver_configure
+
+           - shell: >
+                   a2ensite default-ssl | grep -q 'already enabled'
+                   && echo -n 'already enabled'
+                   || a2ensite default-ssl
+             register: result1
+             changed_when: result1.stdout != 'already enabled'
+             notify: reload_apache2
+             # tags: virtualserver_configure
+
+   handlers:
+           - name: restart_apache2
+             service:
+                   name: apache2
+                   state: restarted
+
+           - name: reload_apache2
+             service:
+                   name: apache2
+                   state: reloaded

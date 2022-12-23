@@ -1,5 +1,9 @@
-#ansible-playbook sixth.yml --tag configure
+#ansible-playbook sixth.yml --tag install
+#ansible-playbook sixth.yml --tag simple_configure
 #ansible-playbook sixth.yml --tag remove
+#ansible-playbook sixth.yml --tag virtualserver_configure
+#ansible-playbook sixth.yml --tag ssl_configure
+#ansible-playbook sixth.yml --tag display_server_status
 ---
  - name: This playbook for doing all web server releated task
    hosts: ubuntuhost
@@ -10,15 +14,15 @@
    tasks:
            - name: Installing apache2
              apt: name=apache2 state=present
-             tags: configure
+             tags: install
 
            - name: Starting apache2
              service: name=apache2 state=started
-             tags: configure
+             tags: install
 
            - name: copy index file
              template: src=index.j2 dest=/var/www/html/index.html
-             tags: configure
+             tags: simple_configure
 
            - name: Stopping the apache2
              service: name=apache2 state=stopped
@@ -27,3 +31,74 @@
            - name: Uninstalling apache2 
              apt: name=apache2 state=absent
              tags: remove
+
+#The /etc/hosts file is crucial for Docker's linking system. Therefore, in the Docker world, /etc/hosts should only be manipulated manually at the image level, rather than the container level.
+#Add the content in /etc/hosts file manually
+           - name: Creating website1 dir for index file
+             file:
+                     path: /var/www/website1
+                     state: directory
+                     mode: '0755'
+             tags: virtualserver_configure
+
+           - copy:
+                   dest: /var/www/website1/index.html
+                   content: "This is website1\n"
+             tags: virtualserver_configure
+
+           - copy:
+                   src: ../files/website1.conf
+                   dest: /etc/apache2/sites-available/website1.conf
+             tags: virtualserver_configure
+
+           - shell: >
+                   a2ensite website1.conf | grep -q 'already enabled'
+                   && echo -n 'already enabled'
+                   || a2ensite website1.conf
+             register: result
+             changed_when: result.stdout != 'already enabled'
+             notify: reload_apache2
+             tags: virtualserver_configure
+
+           - shell: >
+                   a2enmod ssl | grep -q 'Module ssl already enabled'
+                   && echo -n 'Module ssl already enabled'
+                   || a2enmod ssl
+             register: result
+             changed_when: result.stdout != 'Module ssl already enabled'
+             notify: restart_apache2
+             tags: ssl_configure
+
+           - shell: >
+                   a2ensite default-ssl | grep -q 'already enabled'
+                   && echo -n 'already enabled'
+                   || a2ensite default-ssl
+             register: result1
+             changed_when: result1.stdout != 'already enabled'
+             notify: reload_apache2
+             tags: ssl_configure
+
+           - copy:
+                   src: ../files/000-default.conf
+                   dest: /etc/apache2/sites-available/000-default.conf
+             tags: display_server_status
+
+           - shell: >
+                   a2enmod status | grep -q 'already enabled'
+                   && echo -n 'already enabled'
+                   || a2enmod status
+             register: result3
+             changed_when: result3.stdout != 'already enabled'
+             notify: restart_apache2
+             tags: display_server_status
+
+   handlers:
+           - name: restart_apache2
+             service:
+                   name: apache2
+                   state: restarted
+
+           - name: reload_apache2
+             service:
+                   name: apache2
+                   state: reloaded
