@@ -81,7 +81,7 @@
            - name: Ansible lineinfile regexp replace the example
              lineinfile:
                      dest: /etc/apache2/conf-available/security.conf
-                     regexp: '(#ServerTokens OS)'
+                     regexp: '(ServerTokens OS)'
                      line: 'ServerTokens Prod'
                      backrefs: yes
              tags: security_patch
