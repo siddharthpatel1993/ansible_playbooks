@@ -7,12 +7,12 @@
 #ansible-playbook sixth.yml --tag implement_learningwebsite
 #ansible-playbook sixth.yml --tag remove
 ---
- - name: This playbook for doing all web server releated task
+ - name: This playbook is for doing all web server releated task
    hosts: ubuntuhost
    become: yes
    vars:
            server_name: Prod Server
-           owner: Nidhi my love
+           owner: SIDDHARTH PATEL
    tasks:
            - name: Installing apache2
              apt: name=apache2 state=present
