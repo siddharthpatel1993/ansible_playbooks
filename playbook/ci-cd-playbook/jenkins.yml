@@ -1,0 +1,49 @@
+---
+ - hosts: jenkinsserver
+   remote_user: normaluser
+   become: yes
+   become_method: sudo
+   become_user: root
+   gather_facts: yes
+   connection: ssh
+
+   tasks:
+           - name: Update and upgrade the server
+             shell: |
+                     apt-get update && apt-get upgrade -y
+             args:
+                     warn: false
+
+           - name: Install gnupg, wget, sudo, curl, Java packages
+             apt:
+                     name: "{{item}}"
+                     state: present
+             loop:
+                     - gnupg
+                     - wget
+                     - sudo
+                     - curl
+                     - openjdk-11-jdk
+
+           - name: Getting the jenkins package
+             shell: |
+                     curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+                     echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+             args:
+                     warn: false
+
+           - name: Updating the server again
+             shell: |
+                    apt-get update
+             args:
+                     warn: false
+
+           - name: Installing Jenkins
+             apt:
+                     name: jenkins
+                     state: present
+
+           - name: Starting the jenkins service
+             service:
+                     name: jenkins
+                     state: started

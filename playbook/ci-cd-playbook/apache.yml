@@ -1,0 +1,12 @@
+---
+ - name: This playbook is for doing all web server releated task
+   hosts: apacheserver
+   become: yes
+   tasks:
+           - name: Installing apache2
+             apt: name=apache2 state=present
+             tags: install
+
+           - name: Starting apache2
+             service: name=apache2 state=started
+             tags: install
