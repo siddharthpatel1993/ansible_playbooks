@@ -1,0 +1,78 @@
+---
+ - hosts: elasticsearchserver
+   remote_user: normaluser
+   become: yes
+   become_method: sudo
+   become_user: root
+   gather_facts: yes
+   connection: ssh
+
+   tasks:
+           - name: Update and upgrade the server
+             shell: |
+                     apt-get update && apt-get upgrade -y
+             args:
+                     warn: false
+
+           - name: Install gnupg, wget, sudo, curl, tcpdump, net-tools, vim, iputils-ping, Java packages
+             apt:
+                     name: "{{item}}"
+                     state: present
+             loop:
+                     - gnupg
+                     - wget
+                     - sudo
+                     - curl
+                     - tcpdump
+                     - net-tools
+                     - vim
+                     - iputils-ping
+                     - default-jdk
+                     - openjdk-8-jre
+                     - apt-transport-https
+
+           - name: Getting the elasticsearch package
+             shell: |
+                     wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+                     echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee  /etc/apt/sources.list.d/elastic-7.x.list
+             args:
+                     warn: false
+
+           - name: Updating the server again
+             shell: |
+                    apt-get update
+             args:
+                     warn: false
+
+           - name: Installing Elasticsearch
+             apt:
+                     name: elasticsearch
+                     state: present
+
+           - name: Taking a backup of elasticsearch configuration file
+             copy:
+                     src: /etc/elasticsearch/elasticsearch.yml
+                     dest: /etc/elasticsearch/elasticsearch.yml_orig
+                     remote_src: yes
+
+           - name: Copying elasticsearch configuration file
+             copy:
+                     src: conf/elasticsearch.yml
+                     dest: /etc/elasticsearch/elasticsearch.yml
+
+           - name: Taking a backup of elasticsearch jvm file
+             copy:
+                     src: /etc/elasticsearch/jvm.options
+                     dest: /etc/elasticsearch/jvm.options_orig
+                     remote_src: yes
+
+           - name: Copying elasticsearch jvm file
+             copy:
+                     src: conf/jvm.options
+                     dest: /etc/elasticsearch/jvm.options
+
+
+           - name: Starting the jenkins service
+             service:
+                     name: elasticsearch
+                     state: started
