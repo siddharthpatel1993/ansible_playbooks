@@ -1,7 +1,18 @@
+#ansible-playbook sixth.yml --tag install
+#ansible-playbook sixth.yml --tag simple_configure
+#ansible-playbook sixth.yml --tag virtualhost_configure
+#ansible-playbook sixth.yml --tag ssl_configure
+#ansible-playbook sixth.yml --tag display_server_status
+#ansible-playbook sixth.yml --tag security_patch
+#ansible-playbook sixth.yml --tag implement_learningwebsite
+#ansible-playbook sixth.yml --tag remove
 ---
  - name: This playbook is for doing all web server releated task
    hosts: webserver
    become: yes
+   vars:
+           server_name: Prod Server
+           owner: SIDDHARTH PATEL
    tasks:
            - name: Installing apache2
              apt: name=apache2 state=present
@@ -10,3 +21,136 @@
            - name: Starting apache2
              service: name=apache2 state=started
              tags: install
+
+           - name: copy index file
+             template: src=index.j2 dest=/var/www/html/index.html
+             tags: simple_configure
+
+#The /etc/hosts file is crucial for Docker's linking system. Therefore, in the Docker world, /etc/hosts should only be manipulated manually at the image level, rather than the container level.
+#Add the content in /etc/hosts file manually
+           - name: Creating website1 dir for index file
+             file:
+                     path: /var/www/website1
+                     state: directory
+                     mode: '0755'
+             tags: virtualhost_configure
+
+           - copy:
+                   dest: /var/www/website1/index.html
+                   content: "This is website1\n"
+             tags: virtualhost_configure
+
+           - copy:
+                   src: ../files/website1.conf
+                   dest: /etc/apache2/sites-available/website1.conf
+             tags: virtualhost_configure
+
+           - shell: >
+                   a2ensite website1.conf | grep -q 'already enabled'
+                   && echo -n 'already enabled'
+                   || a2ensite website1.conf
+             register: result
+             changed_when: result.stdout != 'already enabled'
+             notify: reload_apache2
+             tags: virtualhost_configure
+
+           - shell: >
+                   a2enmod ssl | grep -q 'Module ssl already enabled'
+                   && echo -n 'Module ssl already enabled'
+                   || a2enmod ssl
+             register: result
+             changed_when: result.stdout != 'Module ssl already enabled'
+             notify: restart_apache2
+             tags: ssl_configure
+
+           - shell: >
+                   a2ensite default-ssl | grep -q 'already enabled'
+                   && echo -n 'already enabled'
+                   || a2ensite default-ssl
+             register: result1
+             changed_when: result1.stdout != 'already enabled'
+             notify: reload_apache2
+             tags: ssl_configure
+
+           - copy:
+                   src: ../files/000-default.conf
+                   dest: /etc/apache2/sites-available/000-default.conf
+             tags: display_server_status
+             notify: restart_apache2
+
+           - name: Ansible lineinfile regexp replace the example
+             lineinfile:
+                     dest: /etc/apache2/conf-available/security.conf
+                     regexp: '(ServerTokens OS)'
+                     line: 'ServerTokens Prod'
+                     backrefs: yes
+             tags: security_patch
+
+#Commenting a line with Ansible lineinfile backrefs
+           - name: Ansible lineinfile regexp replace the example
+             lineinfile:
+                     dest: /etc/apache2/conf-available/security.conf
+                     regexp: '(ServerSignature On)'
+                     line: '#\1'
+                     backrefs: yes
+             tags: security_patch
+
+
+#Uncommenting the line with lineinfile regexp
+           - name: Ansible lineinfile backrefs example
+             lineinfile:
+                     dest: /etc/apache2/conf-available/security.conf
+                     regexp: '#(ServerSignature Off)'
+                     line: '\1'
+                     backrefs: yes
+             tags: security_patch
+
+           - name: Updating apache conf file
+             copy:
+                     src: ../files/apache2.conf
+                     dest: /etc/apache2/apache2.conf
+             tags: security_patch
+             notify: restart_apache2
+
+           - name: Synchronization of src on the control machine to dest on the remote hosts
+             synchronize:
+                     src: learning_website/
+                     dest: /var/www/html
+             tags: implement_learningwebsite
+
+           - name: Stopping the apache2
+             service: name=apache2 state=stopped
+             tags: remove
+
+           - name: Uninstalling apache2
+             apt: name=apache2 state=absent
+             tags: remove
+
+           - name: Deleting /var/www/ dir
+             file:
+                     path: /var/www
+                     state: absent
+             tags: remove
+
+           - name: Deleting /etc/apache2 dir
+             file:
+                     path: /etc/apache2
+                     state: absent
+             tags: remove
+
+           - name: Deleting /var/log/apache2 dir
+             file:
+                     path: /var/log/apache2
+                     state: absent
+             tags: remove
+
+   handlers:
+           - name: restart_apache2
+             service:
+                   name: apache2
+                   state: restarted
+
+           - name: reload_apache2
+             service:
+                   name: apache2
+                   state: reloaded

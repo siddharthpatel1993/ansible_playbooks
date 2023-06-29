@@ -54,7 +54,7 @@
                      warn: false
 
 
-           - name: Starting the jenkins service
+           - name: Starting the node_exporter service
              service:
-                     name: elasticsearch
+                     name: node_exporter
                      state: started
