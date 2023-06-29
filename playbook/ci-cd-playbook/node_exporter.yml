@@ -8,9 +8,9 @@
    connection: ssh
 
    tasks:
-           - name: Update and upgrade the server
+           - name: Update the server
              shell: |
-                     apt-get update && apt-get upgrade -y
+                     apt-get update
              args:
                      warn: false
 
