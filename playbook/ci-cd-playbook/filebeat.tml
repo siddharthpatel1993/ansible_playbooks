@@ -1,5 +1,5 @@
 ---
- - hosts: elasticsearch
+ - hosts: webserver
    remote_user: normaluser
    become: yes
    become_method: sudo
@@ -14,21 +14,22 @@
              args:
                      warn: false
 
-           - name: Install gnupg, wget, sudo, curl, tcpdump, net-tools, vim, iputils-ping, Java packages
+           - name: Install gnupg, openssh-server, rsyslog, wget, sudo, curl, tcpdump, telnet, net-tools, vim, iputils-ping
              apt:
                      name: "{{item}}"
                      state: present
              loop:
                      - gnupg
+                     - openssh-server
+                     - rsyslog
                      - wget
                      - sudo
                      - curl
                      - tcpdump
+                     - telnet
                      - net-tools
                      - vim
                      - iputils-ping
-                     - default-jdk
-                     - openjdk-8-jre
                      - apt-transport-https
 
            - name: Getting the elasticsearch package
@@ -44,35 +45,48 @@
              args:
                      warn: false
 
-           - name: Installing Elasticsearch
+           - name: Installing filebeat
              apt:
-                     name: elasticsearch
+                     name: filebeat
                      state: present
 
-           - name: Taking a backup of elasticsearch configuration file
+           - name: Taking a backup of filebeat configuration file
              copy:
-                     src: /etc/elasticsearch/elasticsearch.yml
-                     dest: /etc/elasticsearch/elasticsearch.yml_orig
+                     src: /etc/filebeat/filebeat.yml
+                     dest: /etc/filebeat/filebeat.yml_orig
                      remote_src: yes
 
            - name: Copying elasticsearch configuration file
              copy:
-                     src: conf/elasticsearch.yml
-                     dest: /etc/elasticsearch/elasticsearch.yml
+                     src: conf/filebeat.yml
+                     dest: /etc/filebeat/filebeat.yml
 
-           - name: Taking a backup of elasticsearch jvm file
+           - name: Enabling system module within filebeat
+             shell: |
+                    filebeat modules enable system
+             args:
+                     warn: false
+
+
+           - name: Taking a backup of system module configuration file
              copy:
-                     src: /etc/elasticsearch/jvm.options
-                     dest: /etc/elasticsearch/jvm.options_orig
+                     src: /etc/filebeat/modules.d/system.yml
+                     dest: /etc/filebeat/modules.d/system.yml_orig
                      remote_src: yes
 
-           - name: Copying elasticsearch jvm file
+           - name: Copying system module configuration
              copy:
-                     src: conf/jvm.options
-                     dest: /etc/elasticsearch/jvm.options
+                     src: conf/system.yml
+                     dest: /etc/filebeat/modules.d/system.yml
+
+           - name: Filebeat setup command
+             shell: |
+                    filebeat setup --index-management -E output.logstash.enabled=false -E 'output.elasticsearch.hosts=["elasticsearch:9200"]'
+             args:
+                     warn: false
 
 
-           - name: Starting the jenkins service
+           - name: Starting the Filebeat Service
              service:
-                     name: elasticsearch
+                     name: filebeat
                      state: started

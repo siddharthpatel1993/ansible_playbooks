@@ -1,5 +1,5 @@
 ---
- - hosts: kibanaserver
+ - hosts: kibana
    remote_user: normaluser
    become: yes
    become_method: sudo

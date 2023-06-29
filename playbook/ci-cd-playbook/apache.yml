@@ -1,6 +1,6 @@
 ---
  - name: This playbook is for doing all web server releated task
-   hosts: apacheserver
+   hosts: webserver
    become: yes
    tasks:
            - name: Installing apache2

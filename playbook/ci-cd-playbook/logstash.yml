@@ -1,5 +1,5 @@
 ---
- - hosts: elasticsearch
+ - hosts: logstash
    remote_user: normaluser
    become: yes
    become_method: sudo
@@ -44,35 +44,33 @@
              args:
                      warn: false
 
-           - name: Installing Elasticsearch
+           - name: Running a dpkg command
+             shell: |
+                    dpkg --configure -a
+             args:
+                     warn: false
+
+           - name: Installing Logstash
              apt:
-                     name: elasticsearch
+                     name: logstash
                      state: present
 
-           - name: Taking a backup of elasticsearch configuration file
+           - name: copying the input conf
              copy:
-                     src: /etc/elasticsearch/elasticsearch.yml
-                     dest: /etc/elasticsearch/elasticsearch.yml_orig
-                     remote_src: yes
+                     src: conf/beats-input.conf
+                     dest: /etc/logstash/conf.d/beats-input.conf
 
-           - name: Copying elasticsearch configuration file
+           - name: Copying the ssh-auth-filter
              copy:
-                     src: conf/elasticsearch.yml
-                     dest: /etc/elasticsearch/elasticsearch.yml
+                     src: conf/ssh-auth-filter.conf
+                     dest: /etc/logstash/conf.d/ssh-auth-filter.conf
 
-           - name: Taking a backup of elasticsearch jvm file
+           - name: Copying the elasticsearch-output
              copy:
-                     src: /etc/elasticsearch/jvm.options
-                     dest: /etc/elasticsearch/jvm.options_orig
-                     remote_src: yes
+                     src: conf/elasticsearch-output.conf
+                     dest: /etc/logstash/conf.d/elasticsearch-output.conf
 
-           - name: Copying elasticsearch jvm file
-             copy:
-                     src: conf/jvm.options
-                     dest: /etc/elasticsearch/jvm.options
-
-
-           - name: Starting the jenkins service
+           - name: Starting the Logstash service
              service:
-                     name: elasticsearch
+                     name: logstash
                      state: started
