@@ -8,7 +8,7 @@
 #ansible-playbook sixth.yml --tag remove
 ---
  - name: This playbook is for doing all web server releated task
-   hosts: webserver
+   hosts: server
    become: yes
    vars:
            server_name: Prod Server
