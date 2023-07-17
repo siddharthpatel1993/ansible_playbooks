@@ -1,5 +1,5 @@
 ---
- - hosts: kibana
+ - hosts: elkserver
    remote_user: normaluser
    become: yes
    become_method: sudo
@@ -8,13 +8,13 @@
    connection: ssh
 
    tasks:
-           - name: Update and upgrade the server
+           - name: Update the server
              shell: |
-                     apt-get update && apt-get upgrade -y
+                     apt-get update
              args:
                      warn: false
 
-           - name: Install gnupg, wget, sudo, curl, tcpdump, net-tools, vim, iputils-ping
+           - name: Install gnupg, wget, sudo, curl, tcpdump, net-tools, vim, iputils-ping, Java packages
              apt:
                      name: "{{item}}"
                      state: present
@@ -27,6 +27,8 @@
                      - net-tools
                      - vim
                      - iputils-ping
+                     - default-jdk
+                     - openjdk-8-jre
                      - apt-transport-https
 
            - name: Getting the elasticsearch package
@@ -42,23 +44,35 @@
              args:
                      warn: false
 
-           - name: Installing Kibana
+           - name: Installing Elasticsearch
              apt:
-                     name: kibana
+                     name: elasticsearch
                      state: present
 
-           - name: Taking a backup of kibana configuration file
+           - name: Taking a backup of elasticsearch configuration file
              copy:
-                     src: /etc/kibana/kibana.yml
-                     dest: /etc/kibana/kibana.yml_orig
+                     src: /etc/elasticsearch/elasticsearch.yml
+                     dest: /etc/elasticsearch/elasticsearch.yml_orig
                      remote_src: yes
 
-           - name: Copying kibana configuration file
+           - name: Copying elasticsearch configuration file
              copy:
-                     src: conf/kibana.yml
-                     dest: /etc/kibana/kibana.yml
+                     src: conf/elasticsearch.yml
+                     dest: /etc/elasticsearch/elasticsearch.yml
 
-           - name: Starting the Kibana service
+           - name: Taking a backup of elasticsearch jvm file
+             copy:
+                     src: /etc/elasticsearch/jvm.options
+                     dest: /etc/elasticsearch/jvm.options_orig
+                     remote_src: yes
+
+           - name: Copying elasticsearch jvm file
+             copy:
+                     src: conf/jvm.options
+                     dest: /etc/elasticsearch/jvm.options
+
+
+           - name: Starting the elasticsearch service
              service:
-                     name: kibana
+                     name: elasticsearch
                      state: started
