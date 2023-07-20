@@ -1,5 +1,5 @@
 ---
- - hosts: webserver
+ - hosts: pgaserver
    remote_user: normaluser
    become: yes
    become_method: sudo
@@ -30,16 +30,38 @@
 
            - name: Getting the node-exporter package
              shell: |
-                     wget https://github.com/prometheus/node_exporter/releases/download/v1.5.0/node_exporter-1.5.0.linux-amd64.tar.gz
-                     tar -xzf node_exporter-1.5.0.linux-amd64.tar.gz
+                     wget https://github.com/prometheus/prometheus/releases/download/v2.42.0/prometheus-2.42.0.linux-amd64.tar.gz
+                     tar -xzf prometheus-2.42.0.linux-amd64.tar.gz
                      sudo useradd -s /sbin/nologin prometheus
+                     chown prometheus:prometheus prometheus-2.42.0.linux-amd64 -R
              args:
                      warn: false
 
-           - name: Copying node_exporter.service file
+           - name: Taking backup of default prometheus configuration
              copy:
-                     src: conf/node_exporter.service
-                     dest: /etc/systemd/system/node_exporter.service
+                     src: /home/normaluser/prometheus-2.42.0.linux-amd64/prometheus.yml
+                     dest: /home/normaluser/prometheus-2.42.0.linux-amd64/prometheus.yml_orig
+                     remote_src: yes
+
+           - name: Copying prometheus configuration file
+             copy:
+                     src: conf/prometheus.yml
+                     dest: /home/normaluser/prometheus-2.42.0.linux-amd64/prometheus.yml
+
+           - name: Copying prometheus.service file
+             copy:
+                     src: conf/prometheus.service
+                     dest: /etc/systemd/system/prometheus.service
+
+           - name: Creating rules directory
+             file:
+                     path: /home/normaluser/prometheus-2.42.0.linux-amd64/rules
+                     state: directory
+
+           - name: Copying rules configuration file 
+             copy:
+                     src: conf/node-rules.yml
+                     dest: /home/normaluser/prometheus-2.42.0.linux-amd64/rules/ 
 
            - name: Copying systemctl file
              copy:
@@ -56,5 +78,6 @@
 
            - name: Starting the node_exporter service
              service:
-                     name: node_exporter
+                     name: prometheus 
                      state: started
+
