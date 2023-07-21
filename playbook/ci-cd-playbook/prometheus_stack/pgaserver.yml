@@ -1,0 +1,174 @@
+---
+ - name: Playbook to install Node Exporter to webserver
+   hosts: webserver
+   remote_user: normaluser
+   become: yes
+   become_method: sudo
+   become_user: root
+   gather_facts: yes
+   connection: ssh
+
+   tasks:
+           - name: Update the server
+             shell: |
+                     apt-get update
+             args:
+                     warn: false
+
+           - name: Install python2
+             apt:
+                     name: "{{item}}"
+                     state: present
+             loop:
+                     - python2
+
+           - name: Getting the node-exporter package
+             shell: |
+                     wget https://github.com/prometheus/node_exporter/releases/download/v1.5.0/node_exporter-1.5.0.linux-amd64.tar.gz
+                     tar -xzf node_exporter-1.5.0.linux-amd64.tar.gz
+                     sudo useradd -s /sbin/nologin prometheus
+             args:
+                     warn: false
+
+           - name: Copying node_exporter.service file
+             copy:
+                     src: conf/node_exporter.service
+                     dest: /etc/systemd/system/node_exporter.service
+
+           - name: Copying systemctl file
+             copy:
+                     src: conf/systemctl.py
+                     dest: /usr/bin/systemctl
+
+           - name: Running some extra steps
+             shell: |
+                     chmod 755 /usr/bin/systemctl
+                     sudo systemctl daemon-reload
+             args:
+                     warn: false
+
+           - name: Starting the node_exporter service
+             systemd:
+                     name: node_exporter
+                     state: started
+
+
+
+ - name: Playbook to install Prometheus, Grafana, Alertmanager to pgaserver
+   hosts: pgaserver
+   remote_user: normaluser
+   become: yes
+   become_method: sudo
+   become_user: root
+   gather_facts: yes
+   connection: ssh
+
+   tasks:
+           - name: Update the server
+             shell: |
+                     apt-get update
+             args:
+                     warn: false
+
+           - name: Install python2, gnupg
+             apt:
+                     name: "{{item}}"
+                     state: present
+             loop:
+                     - python2
+                     - gnupg
+
+           - name: Getting the Getting Prometehus package
+             shell: |
+                     wget https://github.com/prometheus/prometheus/releases/download/v2.42.0/prometheus-2.42.0.linux-amd64.tar.gz
+                     tar -xzf prometheus-2.42.0.linux-amd64.tar.gz
+                     sudo useradd -s /sbin/nologin prometheus
+                     chown prometheus:prometheus prometheus-2.42.0.linux-amd64 -R
+             args:
+                     warn: false
+
+           - name: Getting the alertmanager package
+             shell: |
+                     wget https://github.com/prometheus/alertmanager/releases/download/v0.25.0/alertmanager-0.25.0.linux-amd64.tar.gz
+                     tar -xzf alertmanager-0.25.0.linux-amd64.tar.gz
+                     chmod 755 alertmanager-0.25.0.linux-amd64 -R
+                     chown prometheus:prometheus alertmanager-0.25.0.linux-amd64 -R
+             args:
+                     warn: false
+
+           - name: Getting the Grafana package
+             shell: |
+                     echo "deb https://packages.grafana.com/oss/deb stable main" > /etc/apt/sources.list.d/grafana.list
+                     wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+                     apt-get update
+             args:
+                     warn: false
+
+           - name: Installing grafana
+             apt:
+                     name: grafana
+                     state: present
+
+           - name: Taking backup of default prometheus configuration
+             copy:
+                     src: /home/normaluser/prometheus-2.42.0.linux-amd64/prometheus.yml
+                     dest: /home/normaluser/prometheus-2.42.0.linux-amd64/prometheus.yml_orig
+                     remote_src: yes
+
+           - name: Taking backup of default alertmanager configuration
+             copy:
+                     src: /home/normaluser/alertmanager-0.25.0.linux-amd64/alertmanager.yml
+                     dest: /home/normaluser/alertmanager-0.25.0.linux-amd64/alertmanager.yml_orig
+                     remote_src: yes
+
+           - name: Copying prometheus configuration file
+             copy:
+                     src: conf/prometheus.yml
+                     dest: /home/normaluser/prometheus-2.42.0.linux-amd64/prometheus.yml
+
+           - name: Copying alertmanager configuration file
+             copy:
+                     src: conf/alertmanager.yml
+                     dest: /home/normaluser/alertmanager-0.25.0.linux-amd64/alertmanager.yml
+
+           - name: Copying prometheus.service file
+             copy:
+                     src: conf/prometheus.service
+                     dest: /etc/systemd/system/prometheus.service
+
+           - name: Copying alertmanager.service file
+             copy:
+                     src: conf/alertmanager.service
+                     dest: /etc/systemd/system/alertmanager.service
+
+           - name: Creating rules directory
+             file:
+                     path: /home/normaluser/prometheus-2.42.0.linux-amd64/rules
+                     state: directory
+
+           - name: Copying rules configuration file
+             copy:
+                     src: conf/node-rules.yml
+                     dest: /home/normaluser/prometheus-2.42.0.linux-amd64/rules/
+
+           - name: Copying systemctl file
+             copy:
+                     src: conf/systemctl.py
+                     dest: /usr/bin/systemctl
+
+           - name: Running some extra steps
+             shell: |
+                     chmod 755 /usr/bin/systemctl
+                     sudo systemctl daemon-reload
+             args:
+                     warn: false
+
+           - name: Starting the prometheus, alertmanager, grafana service
+             systemd:
+                     name: "{{item}}"
+                     state: started
+             loop:
+                     - prometheus
+                     - alertmanager
+                     - grafana-server
+

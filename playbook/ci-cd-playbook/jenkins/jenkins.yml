@@ -1,5 +1,6 @@
 ---
- - hosts: jenkinsserver
+ - name: Playbook to install Jenkins on Jenkins server
+   hosts: jenkinsserver
    remote_user: normaluser
    become: yes
    become_method: sudo
@@ -14,16 +15,14 @@
              args:
                      warn: false
 
-           - name: Install gnupg, wget, sudo, curl, Java packages
+           - name: Install curl, Java packages, python2
              apt:
                      name: "{{item}}"
                      state: present
              loop:
-                     - gnupg
-                     - wget
-                     - sudo
                      - curl
                      - openjdk-11-jdk
+                     - python2
 
            - name: Getting the jenkins package
              shell: |
@@ -43,7 +42,19 @@
                      name: jenkins
                      state: present
 
+           - name: Copying systemctl file
+             copy:
+                     src: conf/systemctl.py
+                     dest: /usr/bin/systemctl
+
+           - name: Running some extra steps
+             shell: |
+                     chmod 755 /usr/bin/systemctl
+                     sudo systemctl daemon-reload
+             args:
+                     warn: false
+
            - name: Starting the jenkins service
-             service:
+             systemd:
                      name: jenkins
                      state: started
