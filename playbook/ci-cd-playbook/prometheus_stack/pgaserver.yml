@@ -78,7 +78,7 @@
                      - python2
                      - gnupg
 
-           - name: Getting the Getting Prometehus package
+           - name: Getting the Prometheus package
              shell: |
                      wget https://github.com/prometheus/prometheus/releases/download/v2.42.0/prometheus-2.42.0.linux-amd64.tar.gz
                      tar -xzf prometheus-2.42.0.linux-amd64.tar.gz
