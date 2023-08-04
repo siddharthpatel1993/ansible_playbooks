@@ -1,5 +1,5 @@
 ---
- - name: Playbook to install Elasticsearch, Kibana, Logstash on elkserver
+ - name: Playbook to install Elasticsearch, Kibana on elkserver
    hosts: elkserver
    remote_user: normaluser
    become: yes
@@ -45,14 +45,13 @@
              args:
                      warn: false
 
-           - name: Installing Elasticsearch, Kibana, Logstash
+           - name: Installing Elasticsearch, Kibana
              apt:
                      name: "{{item}}"
                      state: present
              loop:
                      - elasticsearch
                      - kibana
-                     - logstash
 
            - name: Taking a backup of elasticsearch configuration file
              copy:
@@ -87,21 +86,6 @@
                      src: conf/jvm.options
                      dest: /etc/elasticsearch/jvm.options
 
-           - name: Copying the beats-input configuration file
-             copy:
-                     src: conf/beats-input.conf
-                     dest: /etc/logstash/conf.d/beats-input.conf
-
-           - name: Copying ssh-auth-filter.conf configuration file
-             copy:
-                     src: conf/ssh-auth-filter.conf
-                     dest: /etc/logstash/conf.d/ssh-auth-filter.conf
-
-           - name: Copying elasticsearch-output.conf configuration file
-             copy:
-                     src: conf/elasticsearch-output.conf
-                     dest: /etc/logstash/conf.d/elasticsearch-output.conf
-
            - name: Copying systemctl file
              copy:
                      src: conf/systemctl.py
@@ -114,14 +98,13 @@
              args:
                      warn: false
 
-           - name: Starting the elasticsearch, kibana,logstash service
+           - name: Starting the elasticsearch, kibana service
              systemd:
                      name: "{{item}}"
                      state: started
              loop:
                      - elasticsearch
                      - kibana
-                     - logstash
 
  - name: Playbook for installing filebeat on Web Server
    hosts: webserver
@@ -180,25 +163,26 @@
 
            - name: Enabling system module within filebeat
              shell: |
-                    filebeat modules enable system
+                    filebeat modules enable apache
              args:
                      warn: false
 
 
            - name: Taking a backup of system module configuration file
              copy:
-                     src: /etc/filebeat/modules.d/system.yml
-                     dest: /etc/filebeat/modules.d/system.yml_orig
+                     src: /etc/filebeat/modules.d/apache.yml
+                     dest: /etc/filebeat/modules.d/apache.yml_orig
                      remote_src: yes
 
            - name: Copying system module configuration
              copy:
-                     src: conf/system.yml
-                     dest: /etc/filebeat/modules.d/system.yml
+                     src: conf/apache.yml
+                     dest: /etc/filebeat/modules.d/apache.yml
 
            - name: Filebeat setup command
              shell: |
                     filebeat setup --index-management -E output.logstash.enabled=false -E 'output.elasticsearch.hosts=["elkserver:9200"]'
+                    filebeat setup -e -E output.logstash.enabled=false -E output.elasticsearch.hosts=['elkserver:9200'] -E setup.kibana.host=elkserver:5601
              args:
                      warn: false
 
@@ -220,5 +204,3 @@
                      state: started
              loop:
                      - filebeat
-                     - rsyslog
-
