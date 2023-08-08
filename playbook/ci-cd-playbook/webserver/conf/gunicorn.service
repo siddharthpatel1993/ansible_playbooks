@@ -1,0 +1,13 @@
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/home/normaluser/learneasyai
+ExecStart=/usr/bin/python3 /usr/local/bin/gunicorn -c /home/normaluser/learneasyai/config/gunicorn/dev.py
+
+[Install]
+WantedBy=multi-user.target

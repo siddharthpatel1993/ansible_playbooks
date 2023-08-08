@@ -19,13 +19,14 @@
              args:
                      warn: false
 
-           - name: Install git, python3-pip
+           - name: Install git, python3-pip, python2
              apt:
                      name: "{{item}}"
                      state: present
              loop:
                      - git
                      - python3-pip
+                     - python2
 
            - name: Getting the django project from git and install the required python package
              shell: |
@@ -57,10 +58,31 @@
                      owner: normaluser
                      group: normaluser
 
-           - copy:
+           - name: Copying the OPENAI API key
+             copy:
                    dest: learneasyai/learn/.env
                    content: "OPENAI_API_KEY='{{ OAK }}'"
 
-           - name: Running the gunicorn and django project
+           - name: Copying systemctl file
+             copy:
+                     src: conf/systemctl.py
+                     dest: /usr/bin/systemctl
+
+           - name: Running some extra steps
              shell: |
-                     cd learneasyai; gunicorn -c  config/gunicorn/dev.py
+                     chmod 755 /usr/bin/systemctl
+                     sudo systemctl daemon-reload
+             args:
+                     warn: false
+
+           - name: Copying gunicorn service 
+             copy:
+                     src: conf/gunicorn.service
+                     dest: /etc/systemd/system/gunicorn.service
+
+           - name: Starting the gunicorn service
+             systemd:
+                     name: gunicorn
+                     state: started
+
+
