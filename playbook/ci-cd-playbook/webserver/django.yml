@@ -1,7 +1,7 @@
 ---
  - name: Playbook to install Django webserver
    hosts: webserver
-   remote_user: normaluser
+   remote_user: ubuntu
    become: yes
    become_method: sudo
    become_user: root
@@ -31,32 +31,22 @@
            - name: Getting the django project from git and install the required python package
              shell: |
                      git clone https://gitlab.com/meghachandsingh/learneasyai.git
-                     chown -R normaluser:normaluser learneasyai
+                     chown -R ubuntu:ubuntu learneasyai
                      python3 -m pip install -r learneasyai/requirements.txt
-
-           - name: Creating gunicorn log directory
-             file:
-                     path: /var/log/gunicorn/
-                     state: directory
-
-           - name: Creating gunicorn process directory
-             file:
-                     path: /var/run/gunicorn/
-                     state: directory
 
            - name: Creating gunicorn log directory with permission
              file:
                      path: /var/log/gunicorn/
                      state: directory
-                     owner: normaluser
-                     group: normaluser
+                     owner: ubuntu
+                     group: ubuntu
 
            - name: Creating gunicorn process directory with permission
              file:
                      path: /var/run/gunicorn/
                      state: directory
-                     owner: normaluser
-                     group: normaluser
+                     owner: ubuntu
+                     group: ubuntu
 
            - name: Copying the OPENAI API key
              copy:
@@ -79,6 +69,11 @@
              copy:
                      src: conf/gunicorn.service
                      dest: /etc/systemd/system/gunicorn.service
+
+           - name: Copying gunicorn service
+             copy:
+                     src: conf/gunicorn.socket
+                     dest: /etc/systemd/system/gunicorn.socket
 
            - name: Starting the gunicorn service
              systemd:

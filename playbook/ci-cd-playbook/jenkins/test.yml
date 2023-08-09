@@ -1,7 +1,7 @@
 ---
- - name: Playbook to 
+ - name: Playbook to setup jenkins
    hosts: jenkinsserver
-   remote_user: normaluser
+   remote_user: ubuntu
    become: yes
    become_method: sudo
    become_user: root

@@ -7,11 +7,11 @@ After=network-online.target
 User=prometheus
 Group=prometheus
 Type=simple
-ExecStart= /home/normaluser/prometheus-2.42.0.linux-amd64/prometheus \
---config.file=/home/normaluser/prometheus-2.42.0.linux-amd64/prometheus.yml \
---storage.tsdb.path=/home/normaluser/prometheus-2.42.0.linux-amd64/ \
---web.console.templates=/home/normaluser/prometheus-2.42.0.linux-amd64/consoles \
---web.console.libraries=/home/normaluser/prometheus-2.42.0.linux-amd64/console_libraries
+ExecStart= /home/ubuntu/prometheus-2.42.0.linux-amd64/prometheus \
+--config.file=/home/ubuntu/prometheus-2.42.0.linux-amd64/prometheus.yml \
+--storage.tsdb.path=/home/ubuntu/prometheus-2.42.0.linux-amd64/ \
+--web.console.templates=/home/ubuntu/prometheus-2.42.0.linux-amd64/consoles \
+--web.console.libraries=/home/ubuntu/prometheus-2.42.0.linux-amd64/console_libraries
 
 [Install]
 WantedBy=multi-user.target

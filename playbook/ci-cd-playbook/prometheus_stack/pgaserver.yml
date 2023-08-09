@@ -1,7 +1,7 @@
 ---
  - name: Playbook to install Node Exporter to webserver
    hosts: webserver
-   remote_user: normaluser
+   remote_user: ubuntu
    become: yes
    become_method: sudo
    become_user: root
@@ -56,7 +56,7 @@
 
  - name: Playbook to install Prometheus, Grafana, Alertmanager to pgaserver
    hosts: pgaserver
-   remote_user: normaluser
+   remote_user: ubuntu
    become: yes
    become_method: sudo
    become_user: root
@@ -111,25 +111,25 @@
 
            - name: Taking backup of default prometheus configuration
              copy:
-                     src: /home/normaluser/prometheus-2.42.0.linux-amd64/prometheus.yml
-                     dest: /home/normaluser/prometheus-2.42.0.linux-amd64/prometheus.yml_orig
+                     src: /home/ubuntu/prometheus-2.42.0.linux-amd64/prometheus.yml
+                     dest: /home/ubuntu/prometheus-2.42.0.linux-amd64/prometheus.yml_orig
                      remote_src: yes
 
            - name: Taking backup of default alertmanager configuration
              copy:
-                     src: /home/normaluser/alertmanager-0.25.0.linux-amd64/alertmanager.yml
-                     dest: /home/normaluser/alertmanager-0.25.0.linux-amd64/alertmanager.yml_orig
+                     src: /home/ubuntu/alertmanager-0.25.0.linux-amd64/alertmanager.yml
+                     dest: /home/ubuntu/alertmanager-0.25.0.linux-amd64/alertmanager.yml_orig
                      remote_src: yes
 
            - name: Copying prometheus configuration file
              copy:
                      src: conf/prometheus.yml
-                     dest: /home/normaluser/prometheus-2.42.0.linux-amd64/prometheus.yml
+                     dest: /home/ubuntu/prometheus-2.42.0.linux-amd64/prometheus.yml
 
            - name: Copying alertmanager configuration file
              copy:
                      src: conf/alertmanager.yml
-                     dest: /home/normaluser/alertmanager-0.25.0.linux-amd64/alertmanager.yml
+                     dest: /home/ubuntu/alertmanager-0.25.0.linux-amd64/alertmanager.yml
 
            - name: Copying prometheus.service file
              copy:
@@ -143,13 +143,13 @@
 
            - name: Creating rules directory
              file:
-                     path: /home/normaluser/prometheus-2.42.0.linux-amd64/rules
+                     path: /home/ubuntu/prometheus-2.42.0.linux-amd64/rules
                      state: directory
 
            - name: Copying rules configuration file
              copy:
                      src: conf/node-rules.yml
-                     dest: /home/normaluser/prometheus-2.42.0.linux-amd64/rules/
+                     dest: /home/ubuntu/prometheus-2.42.0.linux-amd64/rules/
 
            - name: Copying systemctl file
              copy:

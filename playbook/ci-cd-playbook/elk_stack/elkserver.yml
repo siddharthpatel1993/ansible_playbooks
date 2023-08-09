@@ -1,7 +1,7 @@
 ---
  - name: Playbook to install Elasticsearch, Kibana on elkserver
    hosts: elkserver
-   remote_user: normaluser
+   remote_user: ubuntu
    become: yes
    become_method: sudo
    become_user: root
@@ -108,7 +108,7 @@
 
  - name: Playbook for installing filebeat on Web Server
    hosts: webserver
-   remote_user: normaluser
+   remote_user: ubuntu
    become: yes
    become_method: sudo
    become_user: root
