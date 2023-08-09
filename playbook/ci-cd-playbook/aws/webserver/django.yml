@@ -19,13 +19,14 @@
              args:
                      warn: false
 
-           - name: Install git, python3-pip
+           - name: Install git, python3-pip, nginx
              apt:
                      name: "{{item}}"
                      state: present
              loop:
                      - git
                      - python3-pip
+                     - nginx
 
            - name: Getting the django project from git and install the required python package
              shell: |
@@ -62,9 +63,13 @@
                      src: conf/gunicorn.socket
                      dest: /etc/systemd/system/gunicorn.socket
 
-           - name: Starting the gunicorn service
-             systemd:
-                     name: gunicorn
-                     state: started
+           - name: copy nginx conf file
+             copy:
+                     src: conf/learneasyai_nginx.conf
+                     dest: /etc/nginx/sites-available/learneasyai
 
-
+           - name: Starting the Django app
+             shell: |
+                     cd /home/ubuntu/learneasyai/; /usr/bin/python3 /usr/local/bin/gunicorn -c config/gunicorn/dev.py
+                     ln -s /etc/nginx/sites-available/learneasyai /etc/nginx/sites-enabled/learneasyai
+                     systemctl restart nginx

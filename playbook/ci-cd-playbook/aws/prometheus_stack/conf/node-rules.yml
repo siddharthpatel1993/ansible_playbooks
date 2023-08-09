@@ -2,7 +2,7 @@ groups:
   - name: node_exporter_alerts
     rules:
       - alert: Node down
-        expr: up{instance="webserver:9100"} == 0
+        expr: up{instance="172.31.87.246:9100"} == 0
         for: 1m
         labels:
           severity: warning

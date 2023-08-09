@@ -15,7 +15,7 @@
              args:
                      warn: false
 
-           - name: Install gnupg, Java packages, apt-transport-https, python2
+           - name: Install gnupg, Java packages, apt-transport-https
              apt:
                      name: "{{item}}"
                      state: present
@@ -24,7 +24,6 @@
                      - default-jdk
                      - openjdk-8-jre
                      - apt-transport-https
-                     - python2
 
            - name: Getting the elasticsearch package
              shell: |
@@ -86,18 +85,6 @@
                      src: conf/jvm.options
                      dest: /etc/elasticsearch/jvm.options
 
-           - name: Copying systemctl file
-             copy:
-                     src: conf/systemctl.py
-                     dest: /usr/bin/systemctl
-
-           - name: Running some extra steps
-             shell: |
-                     chmod 755 /usr/bin/systemctl
-                     sudo systemctl daemon-reload
-             args:
-                     warn: false
-
            - name: Starting the elasticsearch, kibana service
              systemd:
                      name: "{{item}}"
@@ -122,7 +109,7 @@
              args:
                      warn: false
 
-           - name: Install gnupg, rsyslog, apt-transport-https, python2
+           - name: Install gnupg, rsyslog, apt-transport-https
              apt:
                      name: "{{item}}"
                      state: present
@@ -130,7 +117,6 @@
                      - gnupg
                      - rsyslog
                      - apt-transport-https
-                     - python2
 
            - name: Getting the elasticsearch package
              shell: |
@@ -164,6 +150,7 @@
            - name: Enabling system module within filebeat
              shell: |
                     filebeat modules enable apache
+                    filebeat modules enable nginx
              args:
                      warn: false
 
@@ -181,24 +168,12 @@
 
            - name: Filebeat setup command
              shell: |
-                    filebeat setup --index-management -E output.logstash.enabled=false -E 'output.elasticsearch.hosts=["elkserver:9200"]'
-                    filebeat setup -e -E output.logstash.enabled=false -E output.elasticsearch.hosts=['elkserver:9200'] -E setup.kibana.host=elkserver:5601
+                    filebeat setup --index-management -E output.logstash.enabled=false -E 'output.elasticsearch.hosts=["172.31.95.57:9200"]'
+                    filebeat setup -e -E output.logstash.enabled=false -E output.elasticsearch.hosts=['172.31.95.57:9200'] -E setup.kibana.host=172.31.95.57:5601
              args:
                      warn: false
 
-           - name: Copying systemctl file
-             copy:
-                     src: conf/systemctl.py
-                     dest: /usr/bin/systemctl
-
-           - name: Running some extra steps
-             shell: |
-                     chmod 755 /usr/bin/systemctl
-                     sudo systemctl daemon-reload
-             args:
-                     warn: false
-
-           - name: Starting the Filebeat, rsyslog Service
+           - name: Starting the Filebeat
              systemd:
                      name: "{{item}}"
                      state: started

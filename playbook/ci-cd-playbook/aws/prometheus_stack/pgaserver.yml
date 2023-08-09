@@ -27,6 +27,7 @@
                      wget https://github.com/prometheus/node_exporter/releases/download/v1.5.0/node_exporter-1.5.0.linux-amd64.tar.gz
                      tar -xzf node_exporter-1.5.0.linux-amd64.tar.gz
                      sudo useradd -s /sbin/nologin prometheus
+                     chown prometheus:prometheus node_exporter-1.5.0.linux-amd64 -R
              args:
                      warn: false
 
@@ -34,18 +35,6 @@
              copy:
                      src: conf/node_exporter.service
                      dest: /etc/systemd/system/node_exporter.service
-
-           - name: Copying systemctl file
-             copy:
-                     src: conf/systemctl.py
-                     dest: /usr/bin/systemctl
-
-           - name: Running some extra steps
-             shell: |
-                     chmod 755 /usr/bin/systemctl
-                     sudo systemctl daemon-reload
-             args:
-                     warn: false
 
            - name: Starting the node_exporter service
              systemd:
@@ -69,14 +58,6 @@
                      apt-get update
              args:
                      warn: false
-
-           - name: Install python2, gnupg
-             apt:
-                     name: "{{item}}"
-                     state: present
-             loop:
-                     - python2
-                     - gnupg
 
            - name: Getting the Prometheus package
              shell: |
@@ -150,18 +131,6 @@
              copy:
                      src: conf/node-rules.yml
                      dest: /home/ubuntu/prometheus-2.42.0.linux-amd64/rules/
-
-           - name: Copying systemctl file
-             copy:
-                     src: conf/systemctl.py
-                     dest: /usr/bin/systemctl
-
-           - name: Running some extra steps
-             shell: |
-                     chmod 755 /usr/bin/systemctl
-                     sudo systemctl daemon-reload
-             args:
-                     warn: false
 
            - name: Starting the prometheus, alertmanager, grafana service
              systemd:

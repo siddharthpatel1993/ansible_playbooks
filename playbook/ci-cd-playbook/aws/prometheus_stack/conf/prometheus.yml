@@ -31,4 +31,4 @@ scrape_configs:
   - job_name: "node_exporter"
     scrape_interval: 5s
     static_configs:
-      - targets: ["webserver:9100"]
+      - targets: ["172.31.87.246:9100"]
