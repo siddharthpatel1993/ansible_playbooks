@@ -1,0 +1,48 @@
+---
+ - name: Playbook to install Jenkins on Jenkins server
+   hosts: jenkinsserver
+   remote_user: ubuntu
+   become: yes
+   become_method: sudo
+   become_user: root
+   gather_facts: yes
+   connection: ssh
+
+   tasks:
+           - name: Update the server
+             shell: |
+                     apt-get update
+             args:
+                     warn: false
+
+           - name: Install curl, Java packages, python2
+             apt:
+                     name: "{{item}}"
+                     state: present
+             loop:
+                     - curl
+                     - openjdk-11-jdk
+                     - python2
+
+           - name: Getting the jenkins package
+             shell: |
+                     curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+                     echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+             args:
+                     warn: false
+
+           - name: Updating the server again
+             shell: |
+                    apt-get update
+             args:
+                     warn: false
+
+           - name: Installing Jenkins
+             apt:
+                     name: jenkins
+                     state: present
+
+           - name: Starting the jenkins service
+             systemd:
+                     name: jenkins
+                     state: started

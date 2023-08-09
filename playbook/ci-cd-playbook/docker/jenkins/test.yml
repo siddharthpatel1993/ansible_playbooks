@@ -1,0 +1,25 @@
+---
+ - name: Playbook to setup jenkins
+   hosts: jenkinsserver
+   remote_user: ubuntu
+   become: yes
+   become_method: sudo
+   become_user: root
+   gather_facts: yes
+   connection: ssh
+
+   tasks:
+           - name: Update the server
+             shell: |
+                     apt-get update
+             args:
+                     warn: false
+
+           - name: Install git, ansible, sshpass
+             apt:
+                     name: "{{item}}"
+                     state: present
+             loop:
+                     - git
+                     - ansible
+                     - sshpass

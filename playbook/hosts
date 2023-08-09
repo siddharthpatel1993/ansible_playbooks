@@ -1,0 +1,6 @@
+[server]
+ansibleserver ansible_host=172.31.83.9 ansible_user=ubuntu
+jenkinserver ansible_host=172.31.93.174 ansible_user=ubuntu
+webserver ansible_host=172.31.87.240 ansible_user=ubuntu
+elkserver ansible_host=172.31.85.111 ansible_user=ubuntu
+pgaserver ansible_host=172.31.82.233 ansible_user=ubuntu

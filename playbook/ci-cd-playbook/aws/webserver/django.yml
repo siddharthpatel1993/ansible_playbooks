@@ -1,0 +1,70 @@
+---
+ - name: Playbook to install Django webserver
+   hosts: webserver
+   remote_user: ubuntu
+   become: yes
+   become_method: sudo
+   become_user: root
+   gather_facts: yes
+   connection: ssh
+   vars_prompt:
+           - name: OAK
+             prompt: Enter your OPENAI API KEY
+             private: yes
+
+   tasks:
+           - name: Update the server
+             shell: |
+                     apt-get update
+             args:
+                     warn: false
+
+           - name: Install git, python3-pip
+             apt:
+                     name: "{{item}}"
+                     state: present
+             loop:
+                     - git
+                     - python3-pip
+
+           - name: Getting the django project from git and install the required python package
+             shell: |
+                     git clone https://gitlab.com/meghachandsingh/learneasyai.git
+                     chown -R ubuntu:ubuntu learneasyai
+                     python3 -m pip install -r learneasyai/requirements.txt
+
+           - name: Creating gunicorn log directory with permission
+             file:
+                     path: /var/log/gunicorn/
+                     state: directory
+                     owner: ubuntu
+                     group: ubuntu
+
+           - name: Creating gunicorn process directory with permission
+             file:
+                     path: /var/run/gunicorn/
+                     state: directory
+                     owner: ubuntu
+                     group: ubuntu
+
+           - name: Copying the OPENAI API key
+             copy:
+                   dest: learneasyai/learn/.env
+                   content: "OPENAI_API_KEY='{{ OAK }}'"
+
+           - name: Copying gunicorn service 
+             copy:
+                     src: conf/gunicorn.service
+                     dest: /etc/systemd/system/gunicorn.service
+
+           - name: Copying gunicorn service
+             copy:
+                     src: conf/gunicorn.socket
+                     dest: /etc/systemd/system/gunicorn.socket
+
+           - name: Starting the gunicorn service
+             systemd:
+                     name: gunicorn
+                     state: started
+
+

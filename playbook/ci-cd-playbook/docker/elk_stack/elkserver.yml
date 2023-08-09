@@ -1,0 +1,206 @@
+---
+ - name: Playbook to install Elasticsearch, Kibana on elkserver
+   hosts: elkserver
+   remote_user: ubuntu
+   become: yes
+   become_method: sudo
+   become_user: root
+   gather_facts: yes
+   connection: ssh
+
+   tasks:
+           - name: Update the server
+             shell: |
+                     apt-get update
+             args:
+                     warn: false
+
+           - name: Install gnupg, Java packages, apt-transport-https, python2
+             apt:
+                     name: "{{item}}"
+                     state: present
+             loop:
+                     - gnupg
+                     - default-jdk
+                     - openjdk-8-jre
+                     - apt-transport-https
+                     - python2
+
+           - name: Getting the elasticsearch package
+             shell: |
+                     wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+                     echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee  /etc/apt/sources.list.d/elastic-7.x.list
+             args:
+                     warn: false
+
+           - name: Updating the server again
+             shell: |
+                    apt-get update
+             args:
+                     warn: false
+
+           - name: Running dpkg command
+             shell: |
+                    dpkg --configure -a
+             args:
+                     warn: false
+
+           - name: Installing Elasticsearch, Kibana
+             apt:
+                     name: "{{item}}"
+                     state: present
+             loop:
+                     - elasticsearch
+                     - kibana
+
+           - name: Taking a backup of elasticsearch configuration file
+             copy:
+                     src: /etc/elasticsearch/elasticsearch.yml
+                     dest: /etc/elasticsearch/elasticsearch.yml_orig
+                     remote_src: yes
+
+           - name: Taking a backup of kibana configuration file
+             copy:
+                     src: /etc/kibana/kibana.yml
+                     dest: /etc/kibana/kibana.yml_orig
+                     remote_src: yes
+
+           - name: Copying elasticsearch configuration file
+             copy:
+                     src: conf/elasticsearch.yml
+                     dest: /etc/elasticsearch/elasticsearch.yml
+
+           - name: Copying kibana configuration file
+             copy:
+                     src: conf/kibana.yml
+                     dest: /etc/kibana/kibana.yml
+
+           - name: Taking a backup of elasticsearch jvm file
+             copy:
+                     src: /etc/elasticsearch/jvm.options
+                     dest: /etc/elasticsearch/jvm.options_orig
+                     remote_src: yes
+
+           - name: Copying elasticsearch jvm file
+             copy:
+                     src: conf/jvm.options
+                     dest: /etc/elasticsearch/jvm.options
+
+           - name: Copying systemctl file
+             copy:
+                     src: conf/systemctl.py
+                     dest: /usr/bin/systemctl
+
+           - name: Running some extra steps
+             shell: |
+                     chmod 755 /usr/bin/systemctl
+                     sudo systemctl daemon-reload
+             args:
+                     warn: false
+
+           - name: Starting the elasticsearch, kibana service
+             systemd:
+                     name: "{{item}}"
+                     state: started
+             loop:
+                     - elasticsearch
+                     - kibana
+
+ - name: Playbook for installing filebeat on Web Server
+   hosts: webserver
+   remote_user: ubuntu
+   become: yes
+   become_method: sudo
+   become_user: root
+   gather_facts: yes
+   connection: ssh
+
+   tasks:
+           - name: Update server
+             shell: |
+                     apt-get update
+             args:
+                     warn: false
+
+           - name: Install gnupg, rsyslog, apt-transport-https, python2
+             apt:
+                     name: "{{item}}"
+                     state: present
+             loop:
+                     - gnupg
+                     - rsyslog
+                     - apt-transport-https
+                     - python2
+
+           - name: Getting the elasticsearch package
+             shell: |
+                     wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+                     echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee  /etc/apt/sources.list.d/elastic-7.x.list
+             args:
+                     warn: false
+
+           - name: Updating the server again
+             shell: |
+                    apt-get update
+             args:
+                     warn: false
+
+           - name: Installing filebeat
+             apt:
+                     name: filebeat
+                     state: present
+
+           - name: Taking a backup of filebeat configuration file
+             copy:
+                     src: /etc/filebeat/filebeat.yml
+                     dest: /etc/filebeat/filebeat.yml_orig
+                     remote_src: yes
+
+           - name: Copying filebeat configuration file
+             copy:
+                     src: conf/filebeat.yml
+                     dest: /etc/filebeat/filebeat.yml
+
+           - name: Enabling system module within filebeat
+             shell: |
+                    filebeat modules enable apache
+             args:
+                     warn: false
+
+
+           - name: Taking a backup of system module configuration file
+             copy:
+                     src: /etc/filebeat/modules.d/apache.yml
+                     dest: /etc/filebeat/modules.d/apache.yml_orig
+                     remote_src: yes
+
+           - name: Copying system module configuration
+             copy:
+                     src: conf/apache.yml
+                     dest: /etc/filebeat/modules.d/apache.yml
+
+           - name: Filebeat setup command
+             shell: |
+                    filebeat setup --index-management -E output.logstash.enabled=false -E 'output.elasticsearch.hosts=["elkserver:9200"]'
+                    filebeat setup -e -E output.logstash.enabled=false -E output.elasticsearch.hosts=['elkserver:9200'] -E setup.kibana.host=elkserver:5601
+             args:
+                     warn: false
+
+           - name: Copying systemctl file
+             copy:
+                     src: conf/systemctl.py
+                     dest: /usr/bin/systemctl
+
+           - name: Running some extra steps
+             shell: |
+                     chmod 755 /usr/bin/systemctl
+                     sudo systemctl daemon-reload
+             args:
+                     warn: false
+
+           - name: Starting the Filebeat, rsyslog Service
+             systemd:
+                     name: "{{item}}"
+                     state: started
+             loop:
+                     - filebeat
